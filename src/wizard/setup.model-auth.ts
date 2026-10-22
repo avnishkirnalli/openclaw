@@ -249,13 +249,11 @@ export async function runSetupModelAuthStep(params: {
       { warnIfModelConfigLooksOff },
       { resolvePreferredProviderForAuthChoice },
       { promptDefaultModel },
-      { loadPreparedModelCatalogView },
     ] = await Promise.all([
       import("../commands/auth-choice.apply.js"),
       import("../commands/auth-choice.model-check.js"),
       import("../plugins/provider-auth-choice-preference.js"),
       import("../flows/model-picker.js"),
-      import("../agents/model-catalog-view.js"),
     ]);
     prompter.disableBackNavigation?.();
     const agentScopedModels = nextConfig.agents?.ownership === "explicit";
@@ -350,35 +348,17 @@ export async function runSetupModelAuthStep(params: {
         ...(providerEnvKey && enteredApiKey ? { [providerEnvKey]: enteredApiKey } : {}),
       };
 
-      // Fetch the live list of models for the selected provider using the new credentials
-      if (preferredProvider) {
-        try {
-          await loadPreparedModelCatalogView({
-            kind: "picker",
-            config: nextConfig,
-            preferredProvider,
-            preferLiveProviderCatalog: true,
-            providerScoped: true,
-            agentDir: params.agentDir ?? target.agentDir,
-            workspaceDir: target.workspaceDir,
-            env: discoveryEnv,
-          });
-        } catch {
-          // If live discovery fails (e.g. offline endpoint), continue to interactive picker
-        }
-      }
-
-      // Prompt user with allowKeep: false to force picking an authorized model
       const modelSelection = await promptDefaultModel({
         config: nextConfig,
         prompter,
-        allowKeep: false,
-        includeProviderPluginSetups: false,
+        allowKeep: authChoiceModelSelectionPolicy.allowKeepCurrent,
+        includeProviderPluginSetups: true,
         preferredProvider,
         browseCatalogOnDemand: true,
         agentId: target.agentId,
         agentDir: target.agentDir,
         workspaceDir: target.workspaceDir,
+        discoveryEnv,
         runtime,
       });
       if (modelSelection.config) {

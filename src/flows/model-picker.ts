@@ -101,6 +101,7 @@ type PromptDefaultModelParams = {
   agentId?: string;
   agentDir?: string;
   workspaceDir?: string;
+  discoveryEnv?: NodeJS.ProcessEnv;
   runtime?: RuntimeEnv;
 };
 
@@ -592,6 +593,7 @@ export async function promptDefaultModel(
         providerScoped: providerScopedCatalog,
         agentDir: pickerAgentDir,
         ...(params.workspaceDir !== undefined ? { workspaceDir: params.workspaceDir } : {}),
+        env: params.discoveryEnv,
       })
     ).snapshot;
   } finally {
