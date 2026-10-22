@@ -329,16 +329,13 @@ export async function runSetupModelAuthStep(params: {
       const preferredProvider = authChoiceModelSelectionPolicy.preferredProvider;
 
       // Extract credentials/API key the user just entered
-      const enteredCredential = authProfiles.find((profile) => {
-        const cred = profile.credential;
-        return (
-          cred &&
-          typeof cred === "object" &&
-          "key" in cred &&
-          typeof (cred as { key?: unknown }).key === "string"
-        );
-      })?.credential as { key?: string } | undefined;
-      const enteredApiKey = enteredCredential?.key;
+      let enteredApiKey: string | undefined;
+      for (const profile of authProfiles) {
+        if ("key" in profile.credential && typeof profile.credential.key === "string") {
+          enteredApiKey = profile.credential.key;
+          break;
+        }
+      }
 
       const providerEnvKey = preferredProvider
         ? `${preferredProvider.toUpperCase().replace(/-/g, "_")}_API_KEY`
